@@ -4,19 +4,21 @@ import Wrapper from "@/components/Wrapper";
 import ProductDetailsCarousel from "@/components/ProductDetailsCarousel";
 import RelatedProducts from "@/components/RelatedProducts";
 import { fetchDataFromApi } from "@/utils/api";
-import { getDiscountedPricePercentage } from "@/utils/helper";
 import ReactMarkdown from "react-markdown";
-// import { useSelector, useDispatch } from "react-redux";
-// import { addToCart } from "@/store/cartSlice";
+import { getDiscountedPricePercentage } from "@/utils/helper";
+
+import { useDispatch } from "react-redux";
+import { addToCart } from "@/store/cartSlice";
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const ProductDetails = ({ product, products }) => {
+    const dispatch = useDispatch();
     const [selectedSize, setSelectedSize] = useState();
     const [showError, setShowError] = useState(false);
-    // const dispatch = useDispatch();
-    const p = product?.data?.[0]?.attributes;
+
+    const p = product.data[0].attributes;
 
     const notify = () => {
         toast.success("Success. Check your cart!", {
@@ -36,13 +38,13 @@ const ProductDetails = ({ product, products }) => {
             <ToastContainer />
             <Wrapper>
                 <div className="flex flex-col lg:flex-row md:px-10 gap-[50px] lg:gap-[100px]">
-                    {/* left column start */}
+                    {/* PRODUCT CAROUSEL START */}
                     <div className="w-full md:w-auto flex-[1.5] max-w-[500px] lg:max-w-full mx-auto lg:mx-0">
                         <ProductDetailsCarousel images={p.image.data} />
                     </div>
-                    {/* left column end */}
+                    {/* PRODUCT CAROUSEL END */}
 
-                    {/* right column start */}
+                    {/* RIGHT CONTENT START */}
                     <div className="flex-[1] py-3">
                         {/* PRODUCT TITLE */}
                         <div className="text-[34px] font-semibold mb-2 leading-tight">
@@ -75,9 +77,11 @@ const ProductDetails = ({ product, products }) => {
                             )}
                         </div>
 
+                        {/* TAX MSG */}
                         <div className="text-md font-medium text-black/[0.5]">
                             incl. of taxes
                         </div>
+                        {/* TAX MSG */}
                         <div className="text-md font-medium text-black/[0.5] mb-20">
                             {`(Also includes all applicable duties)`}
                         </div>
@@ -148,7 +152,7 @@ const ProductDetails = ({ product, products }) => {
                                 } else {
                                     dispatch(
                                         addToCart({
-                                            ...product?.data?.[0],
+                                            ...product.data[0],
                                             selectedSize,
                                             oneQuantityPrice: p.price,
                                         })
@@ -168,6 +172,7 @@ const ProductDetails = ({ product, products }) => {
                         </button>
                         {/* WHISHLIST BUTTON END */}
 
+                        {/* PRODUCT DETAILS START */}
                         <div>
                             <div className="text-lg font-bold mb-5">
                                 Product Details
@@ -176,11 +181,14 @@ const ProductDetails = ({ product, products }) => {
                                 <ReactMarkdown>{p.description}</ReactMarkdown>
                             </div>
                         </div>
+                        {/* PRODUCT DETAILS END */}
                     </div>
-                    {/* right column end */}
+                    {/* RIGHT CONTENT END */}
                 </div>
 
+                {/* RELATED PRODUCTS START */}
                 <RelatedProducts products={products} />
+                {/* RELATED PRODUCTS END */}
             </Wrapper>
         </div>
     );
@@ -190,15 +198,16 @@ export default ProductDetails;
 
 export async function getStaticPaths() {
     const products = await fetchDataFromApi("/api/products?populate=*");
-    const paths = products?.data?.map((p) => ({
+
+    const paths = products.data.map((product) => ({
         params: {
-            slug: p.attributes.slug,
+            slug: product.attributes.slug,
         },
     }));
 
     return {
         paths,
-        fallback: false,
+        fallback: false, // can also be true or 'blocking'
     };
 }
 
@@ -206,9 +215,7 @@ export async function getStaticProps({ params: { slug } }) {
     const product = await fetchDataFromApi(
         `/api/products?populate=*&filters[slug][$eq]=${slug}`
     );
-    const products = await fetchDataFromApi(
-        `/api/products?populate=*&[filters][slug][$ne]=${slug}`
-    );
+    const products = await fetchDataFromApi("/api/products?populate=*");
 
     return {
         props: {
